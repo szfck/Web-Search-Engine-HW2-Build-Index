@@ -1,10 +1,13 @@
 from glob import glob
+from helperWrapper import Helper
+helper = Helper()
 #
 import warc
 
 # List any of the WARC files found in the data folder
 warc_files = glob('../wet_files/*.wet.gz')
 
+# exit()
 # Process each of the WARC files we found
 files_processed = 0
 for fn in warc_files:
@@ -16,7 +19,10 @@ for fn in warc_files:
         text = record.payload.read()
         #
         print url
-        print text
+        # print text
+
+        helper.read(text) 
         print
         print
+        break
     break
