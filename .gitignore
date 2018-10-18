@@ -3,3 +3,7 @@
 *.pyc
 other
 **/out
+inter*
+clib
+merge
+word_count
