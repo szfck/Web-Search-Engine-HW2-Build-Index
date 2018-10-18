@@ -7,3 +7,6 @@ inter*
 clib
 merge
 word_count
+*.bin
+read
+build_index
