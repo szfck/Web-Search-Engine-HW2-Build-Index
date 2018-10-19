@@ -13,17 +13,12 @@
 using namespace std;
 
 int main() {
+    // this is a test : decode info from binarry file and check value
     VByteReader reader("../index.bin");
     int start = 106717567, end = 106717579;
-    // int start = 0, end = 76179;
-    // int start = 116738, end = 133473;
     int num = 10858;
     auto list = reader.read(start, end);
-    // for (auto v : list) {
-    //     cout << v << " ";
-    // }
     cout << list[0] << endl;
     cout << list.back() << endl;
-
     return 0;
 }

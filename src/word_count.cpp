@@ -18,6 +18,7 @@ struct Doc {
 unordered_map<string, int> urls;
 vector<Doc> docs; 
 
+// get next term from string
 string getTerm(const string& s, int& pos) {
     string term = "";
     while (pos < (int)s.size() && s[pos] == ' ') pos++;
@@ -27,6 +28,7 @@ string getTerm(const string& s, int& pos) {
     return term;
 }
 
+// read web page context and count doc and frequnency
 void readPage(const string& s, ofstream& out, ofstream& url_table, map<string, vector<pair<int, int>>>& mp) {
     int pos = 0;
     string url = getTerm(s, pos);
@@ -50,6 +52,7 @@ void readPage(const string& s, ofstream& out, ofstream& url_table, map<string, v
     }
 } 
 
+// read all pages from a file
 void read(ifstream& in, ofstream& out, ofstream& url_table) {
     map<string, vector<pair<int, int>>> mp;
     string str;

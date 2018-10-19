@@ -13,6 +13,8 @@
 using namespace std;
 
 char ch;
+
+//get next term from ifstream
 string getTerm(ifstream& in) {
     string str = "";
     while (true) {
@@ -21,6 +23,8 @@ string getTerm(ifstream& in) {
         if (ch == ' ' || ch == '\n') return str;
     }
 }
+
+//get num with leading 0s
 string getNum(int x) {
     string num = to_string(x);
     while ((int)num.size() < 5) num = '0' + num;
@@ -35,11 +39,12 @@ int main() {
     term_table.open("../term_table.txt");
     VByteWriter index("../index.bin");
 
-    int BLOCK = 128;
+    int BLOCK = 128; // block size
 
     string line = "";
     int term_id = -1;
     while (true) {
+        // read term's doc ids and freqs from intermediate file
         if (!input_file.get(ch)) {
             break;
         }
@@ -72,10 +77,12 @@ int main() {
             input_file.get(ch);
         }
         int number = (int)docid.size();
+
+        // write term's info to binary file
         // term_id {docid...} {freq...}
         int startByte = index.getOffset();
+
         index.write(term_id);
-        // cout << term_id << " " << number << endl;
         for (int i = 0; i < number; i += BLOCK) {
             for (int j = 0; j < BLOCK && i + j < number; j++) {
                 index.write(docid[i + j]);
@@ -87,6 +94,8 @@ int main() {
         index.write(number);
 
         int endByte = index.getOffset();
+
+        // write to term table
         term_table << term_id << " " << term << " " << startByte << " " << endByte << " " << number << endl;
     }
     return 0;

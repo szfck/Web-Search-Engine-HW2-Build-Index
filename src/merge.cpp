@@ -10,30 +10,7 @@
 
 using namespace std;
 
-// void readPage(const string& s, ofstream& out, ofstream& url_table, map<string, vector<pair<int, int>>>& mp) {
-//     int pos = 0;
-//     string url = getTerm(s, pos);
-//     int page_size = stoi(getTerm(s, pos));
-//     if (urls.find(url) != urls.end()) {
-//         return;
-//     }
-//     int docId = (int)docs.size();
-//     urls[url] = docId;
-//     docs.emplace_back(url, page_size);
-//     url_table << docId << " " << url << " " << page_size << endl;
-//     string term = "";
-//     map<string, int> cnt;
-//     while ((term = getTerm(s, pos)) != "") {
-//         cnt[term]++;
-//     }
-//     for (auto& p : cnt) {
-//         string term = p.first;
-//         int freq = p.second;
-//         mp[term].emplace_back(docId, freq);
-//     }
-// } 
-
-
+// output term's doc ids and freqs to file
 void output(string term, map<string, vector<pair<int, int>>>& mp, ofstream& out) {
     auto& list = mp[term];
     string str = term;
@@ -45,6 +22,7 @@ void output(string term, map<string, vector<pair<int, int>>>& mp, ofstream& out)
     out << str << endl;
 }
 
+// get next term from string
 string getTerm(const string& s, int& pos) {
     string term = "";
     while (pos < (int)s.size() && s[pos] == ' ') pos++;
@@ -63,6 +41,7 @@ struct Node {
     }
 };
 
+// add term to priority queue
 void addToQue(int id, priority_queue<Node>& pq, map<string, vector<pair<int, int>>>& mp, ifstream& input_file) {
     string line = "";
     if (getline(input_file, line)) {
@@ -77,13 +56,10 @@ void addToQue(int id, priority_queue<Node>& pq, map<string, vector<pair<int, int
             mp[term].emplace_back(stoi(docId), stoi(freq));
         }
         pq.push(Node(term, id));
-        // if (inque.find(term) == inque.end()) {
-        //     inque.insert(term);
-        //     pq.push(Node(term, id));
-        // }
     }
 }
 
+// n way merge 
 void nway_merge(ifstream input_file[], int n, ofstream& output_file) {
     priority_queue<Node> pq;
     map<string, vector<pair<int, int>>> mp;
@@ -106,11 +82,15 @@ void nway_merge(ifstream input_file[], int n, ofstream& output_file) {
         mp.erase(term);
     }
 }
+
+// get a number with leading 0s
 string getNum(int x) {
     string num = to_string(x);
     while ((int)num.size() < 5) num = '0' + num;
     return num;
 }
+
+// merge files in [start, start + number) to a target file
 void merge_(int step, int start, int number, int target) {
     cout << "merge step: " << step << " from " << start << " to " << start + number - 1 << endl;
     ifstream input_file[number];
