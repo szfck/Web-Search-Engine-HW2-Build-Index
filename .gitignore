@@ -10,3 +10,4 @@ word_count
 *.bin
 read
 build_index
+*.txt
