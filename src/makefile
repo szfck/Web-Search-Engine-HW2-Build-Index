@@ -12,9 +12,6 @@ RM = rm -f  # rm command
 clean:
 	$(RM) *.o
 
-extract_text:
-	time python extract_text.py
-
 word_count: word_count.cpp
 	$(CC) $(CFLAGS) $^ -o $@ && time ./word_count
 
@@ -22,7 +19,8 @@ merge: merge.cpp
 	$(CC) $(CFLAGS) $^ -o $@ && time ./merge
 
 build_index: build_index.cpp helper.o
-	$(CC) $(CFLAGS) $^ -o $@ && time ./build_index
+	$(CC) $(CFLAGS) $^ -o $@
+	# $(CC) $(CFLAGS) $^ -o $@ && time ./build_index
 
 read_test: read_test.cpp helper.o
 	$(CC) $(CFLAGS) $^ -o $@ && time ./read_test

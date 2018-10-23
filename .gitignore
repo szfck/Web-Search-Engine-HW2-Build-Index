@@ -10,3 +10,6 @@ src/build_index
 *.bin
 *.txt
 *.zip
+other*
+old*
+**/wet.paths
