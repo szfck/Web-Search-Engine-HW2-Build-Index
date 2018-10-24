@@ -23,7 +23,7 @@ build_index: build_index.cpp helper.o
 	# $(CC) $(CFLAGS) $^ -o $@ && time ./build_index
 
 read_test: read_test.cpp helper.o
-	$(CC) $(CFLAGS) $^ -o $@ && time ./read_test
+	$(CC) $(CFLAGS) $^ -o $@
 
 helper.o: helper.cpp
 	$(CC) $(CFLAGS) -c $^ -o $@

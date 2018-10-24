@@ -13,3 +13,5 @@ src/build_index
 other*
 old*
 **/wet.paths
+output
+.vscode

@@ -19,21 +19,9 @@ const string OUTPUT = "../output/"; // output dir
 const string URL_TABLE_PATH = OUTPUT + "url_table.txt";
 const string TERM_TABLE_PATH = OUTPUT + "term_table.txt";
 map<string, int> url_map;
-int ucnt;
 map<string, int> term_map;
-int tcnt;
-vector<string> terms;
-vector<pair<string, int>> urls;
-
-void addTerm(int id, string term) {
-    assert (id == (int) terms.size());
-    terms.emplace_back(term);
-}
-
-void addUrl(int id, string url, int length) {
-    assert (id == (int) urls.size());
-    urls.emplace_back(url, length);
-}
+vector<Url> urls;
+vector<Term> terms;
 
 //get next term from ifstream
 string getTerm(string& s, int& pos) {
@@ -77,11 +65,7 @@ void build(int id) {
         //get url
         url = line;
         if (url_map.find(url) == url_map.end()) {
-            url_map[url] = ucnt++;
-        } else {
-            // while (getline(input_file, line) && line != END);
-            // getline(input_file, line);
-            // break;
+            url_map[url] = (int) urls.size();
         }
         int uid = url_map[url];
 
@@ -98,8 +82,8 @@ void build(int id) {
                     cout << url << " " << e.what() << endl;
                     break;
                 }
-                addUrl(uid, url, length);
-                // url_table.write(uid, {url, str(length)});
+                urls.emplace_back(uid, url, length);
+                url_map[url] = uid;
                 for (auto p : freq) { // in uid
                     int tid = p.first, fre = p.second;
                     words[tid].emplace_back(uid, fre);
@@ -111,10 +95,8 @@ void build(int id) {
             string term = "";
             while ((term = getTerm(line, pos)) != "") {
                 if (term_map.find(term) == term_map.end()) {
-                    addTerm(tcnt, term);
-                    // terms.push_back(term);
-                    term_map[term] = tcnt++;
-                    // assert ((int) terms.size() == tcnt);
+                    term_map[term] = (int) terms.size();
+                    terms.emplace_back(term_map[term], term);
                 }
                 int tid = term_map[term];
                 freq[tid]++;
@@ -123,84 +105,65 @@ void build(int id) {
         }
     }
 
-    VByteWriter index_list(OUTPUT + "intermediate-output-2/" + "index-" + id_str + ".bin");
-    TextWriter index_term(OUTPUT + "intermediate-output-2/" + "index-" + id_str + ".txt");
+    Writer index(OUTPUT + "intermediate-output-2/" + "index-" + id_str + ".bin");
+    Writer term_index(OUTPUT + "intermediate-output-2/" + "index-" + id_str + ".txt");
     for (auto& word : words) {
-        int start = index_list.getOffset();
+        int start = index.getOffset();
         int tid = word.first;
         auto& list = word.second;
         int number = (int) list.size();
-        index_list.writeList(tid, list);
-        int end = index_list.getOffset();
-
-        // tid start end #doc
-        index_term.write(tid, {str(start), str(end), str(number)});
+        index.vwriteList(tid, list);
+        int end = index.getOffset();
+        term_index.swrite(str(tid) + " " + str(start) + " " + str(end) + " " + str(number) + '\n');
     }
-    index_list.close();
-    index_term.close();
+    index.close();
+    term_index.close();
     input_file.close();
 }
 
 void init_url_and_term_table() {
     cout << "init url table ..." << endl;
-    TextReader url_table(URL_TABLE_PATH);
-    auto url_map_ = url_table.read();
+    Reader url_reader(URL_TABLE_PATH);
+    urls = url_reader.urlread();
     url_map.clear();
-    urls.clear();
-    for (auto p : url_map_) {
-        // id url length
-        int id = p.first;
-        string url = p.second[0];
-        int length = stoi(p.second[1]);
-        url_map[url] = id;
-        addUrl(id, url, length);
+    for (auto url : urls) {
+        url_map[url.url] = url.uid;
     }
-    url_table.close();
+    url_reader.close();
 
     cout << "init term table ..." << endl;
-    TextReader term_table(TERM_TABLE_PATH);
-    auto term_map_ = term_table.read();
+    Reader term_reader(TERM_TABLE_PATH);
+    terms = term_reader.termread();
     term_map.clear();
-    terms.clear();
-    for (auto p : term_map_) {
-        // id term
-        int id = p.first;
-        string term = p.second[0];
-        term_map[term] = id;
-        addTerm(id, term);
+    for (auto term : terms) {
+        term_map[term.term] = term.tid;
     }
-    term_table.close();
-    ucnt = (int) url_map.size();
-    tcnt = (int) term_map.size();
-    cout << "ucnt: " << ucnt << " tcnt: " << tcnt << endl;
+    term_reader.close();
+    cout << "ucnt: " << (int) urls.size() << " tcnt: " << (int) terms.size() << endl;
 }
 
 int main(int argc, char *argv[]) {
     int lower = atoi(argv[1]), upper = atoi(argv[2]);
     init_url_and_term_table();
-    int total = 100;
 
-    cout << "start build index for file " << lower << " to " << upper - 1 << endl;
+    cout << "start build index for file [" << lower << " to " << upper << ")" << endl;
     for (int i = lower; i < upper; i++) {
         build(i);
     }
 
     cout << "write back to url_table..." << endl;
-    // write to url_table
-    // uid url length
-    TextWriter url_table(URL_TABLE_PATH);
-    for (int i = 0; i < (int) urls.size(); i++) {
-        url_table.write(i, {urls[i].first, str(urls[i].second)});
+
+    Writer url_writer(URL_TABLE_PATH);
+    for (auto url : urls) {
+        url_writer.swrite(str(url.uid) + " " + url.url + " " + str(url.length) + '\n');
     }
-    url_table.close();
+    url_writer.close();
 
     cout << "write back to term_table..." << endl;
-    // write to term table
-    // tid term_str
-    TextWriter term_table(TERM_TABLE_PATH);
-    for (int i = 0; i < (int) terms.size(); i++) {
-        term_table.write(i, {terms[i]});
+    Writer term_writer(TERM_TABLE_PATH);
+    for (auto term : terms) {
+        term_writer.swrite(str(term.tid) + " " + term.term + '\n');
     }
-    term_table.close();
+    term_writer.close();
     return 0;
 }

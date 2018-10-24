@@ -4,84 +4,121 @@
 #include <map>
 using namespace std;
 
+const int BLOCK = 128;
 class Writer {
     protected:
+        int offset;
         ofstream out;
     public:
+        Writer();
         Writer(string file_name);
-
-        // close file
+        void open(string file_name);
         void close();
+        int getOffset();
+        void vwrite(int x);
+        void swrite(string s);
+        void vwriteList(int tid, const vector<pair<int, int>>& list);
+};
+
+struct Url {
+    string url;
+    int uid, length;
+    Url() {}
+    Url(int uid, string url, int length) : uid(uid), url(url), length(length) {}
+};
+
+struct Term {
+    int tid;
+    string term;
+    Term() {}
+    Term(int tid, string term) : 
+        tid(tid), term(term) {}
+};
+
+struct Index {
+    int tid, start, end, number;
+    Index() {}
+    Index(int tid, int start, int end, int number) : 
+        tid(tid), start(start), end(end), number(number) {}
+};
+
+struct Doc {
+    int uid, freq;
+    Doc() {}
+    Doc(int uid, int freq) : uid(uid), freq(freq) {}
 };
 
 class Reader {
     protected:
         ifstream in;
     public:
+        Reader();
         Reader(string file_name);
-
-        // close file
+        void open(string file_name);
         void close();
+
+        vector<int> vread(int start, int end);
+        vector<Doc> vreadList(int tid, int start, int end, int number);
+        vector<Url> urlread();
+        vector<Term> termread();
+        vector<Index> indexread();
+
 };
 
-// class Term {
-//     int start, end, number;
-//     Term() {}
-//     Term(int start, int end, int number) : start(start), end(end), number(number) {}
+// class TextWriter : public Writer {
+//     public:
+//         TextWriter() {};
+//         TextWriter(string file_name);
+
+//         void write(int key, const vector<string>& list);
 // };
 
-// class Url {
-//     string url;
-// }
+// class TextReader : public Reader {
+//     public:
+//         TextReader() {};
+//         TextReader(string file_name);
+//         map<int, vector<string>> read();
+// };
 
-// template<class T>
-class TextWriter : public Writer {
-    public:
-        TextWriter(string file_name);
+// const int BLOCK = 128;
+// class VByteWriter : public Writer {
+//     private:
+//         // ofstream out;
+//         int offset;
+//         // const int BLOCK = 128;
+//     public:
+//         VByteWriter() {};
+//         VByteWriter(string file_name);
 
-        void write(int key, const vector<string>& list);
-};
+//         // get current offset
+//         int getOffset();
 
-// template<class T>
-class TextReader : public Reader {
-    // private:
-        // string getNext(const string& s, int& pos);
-    public:
-        TextReader(string file_name);
-        map<int, vector<string>> read();
-};
+//         // wirte long long int to a binary file with varbyte encoding
+//         void write(int x);
 
-class VByteWriter : public Writer {
-    private:
-        // ofstream out;
-        int offset;
-        const int BLOCK = 128;
-    public:
-        VByteWriter(string file_name);
+//         // write tid with list of (docId, freq) pair
+//         void writeList(int tid, const vector<pair<int, int>>& list);
 
-        // get current offset
-        int getOffset();
+//         // close file
+//         // void close();
+// };
 
-        // wirte long long int to a binary file with varbyte encoding
-        void write(int x);
+// class VByteReader : public Reader {
+//     private:
+//         int offset;
+//         // read bytes from binary file in range [start, end)
+//         // and decode to long long vector
+//         // const int BLOCK = 128;
+//     public:
+//         VByteReader() {};
+//         VByteReader(string file_name);
 
-        // write tid with list of (docId, freq) pair
-        void writeList(int tid, const vector<pair<int, int>>& list);
+//         int getOffset();
 
-        // close file
-        // void close();
-};
+//         // int getNext(int& start);
+//         vector<int> read(int start, int end);
+//         vector<pair<int, int>> read(int tid, int start, int end, int number);
 
-class VByteReader : public Reader {
-    // private:
-    //     ifstream in;
-    public:
-        VByteReader(string file_name);
-
-        // read bytes from binary file in range [start, end)
-        // and decode to long long vector
-        vector<int> read(int start, int end);
-
-        // // close file
-        // void close();
-};
+//         // // close file
+//         // void close();
+// };

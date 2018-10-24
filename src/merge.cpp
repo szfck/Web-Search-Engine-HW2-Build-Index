@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <string>
+#include "helper.h"
 #include <set>
 #include <vector>
 #include <map>
@@ -10,76 +11,67 @@
 
 using namespace std;
 
-// output term's doc ids and freqs to file
-void output(string term, map<string, vector<pair<int, int>>>& mp, ofstream& out) {
-    auto& list = mp[term];
-    string str = term;
-    for(auto& pa : list) {
-        int docId = pa.first;
-        int freq = pa.second;
-        str += " (" + to_string(docId) + "," + to_string(freq) + ")";
-    }
-    out << str << endl;
-}
-
-// get next term from string
-string getTerm(const string& s, int& pos) {
-    string term = "";
-    while (pos < (int)s.size() && s[pos] == ' ') pos++;
-    while (pos < (int)s.size() && s[pos] != ' ') {
-        term += s[pos++];
-    }
-    return term;
-}
 struct Node {
-    string term;
-    int id;
-    Node(string term, int id) : term(term), id(id) {}
+    int tid, fid;
+    Node(int tid, int fid) : tid(tid), fid(fid) {}
     Node() {}
     bool operator < (const Node& o) const {
-        return term > o.term;
+        return tid > o.tid;
     }
 };
 
 // add term to priority queue
-void addToQue(int id, priority_queue<Node>& pq, map<string, vector<pair<int, int>>>& mp, ifstream& input_file) {
-    string line = "";
-    if (getline(input_file, line)) {
-        int pos = 0;
-        string term = getTerm(line, pos);
-        string str = "";
-        while ((str = getTerm(line, pos)) != "") {
-            str = str.substr(1, (int)str.size() - 2);
-            int p = str.find(',');
-            string docId = str.substr(0, p);
-            string freq = str.substr(p + 1);
-            mp[term].emplace_back(stoi(docId), stoi(freq));
-        }
-        pq.push(Node(term, id));
-    }
+void addToQue(int fid, priority_queue<Node>& pq, map<int, vector<pair<int, int>>>& mp, VByteReader& input_file, int& start, int& end) {
+    int tid = input_file.getNext(start);
+    int number = input_file.getNext(start);
+    auto list = input_file.read(tid, start - 2, start + number, number);
+    // string line = "";
+    // if (getline(input_file, line)) {
+    //     int pos = 0;
+    //     string term = getTerm(line, pos);
+    //     string str = "";
+    //     while ((str = getTerm(line, pos)) != "") {
+    //         str = str.substr(1, (int)str.size() - 2);
+    //         int p = str.find(',');
+    //         string docId = str.substr(0, p);
+    //         string freq = str.substr(p + 1);
+    //         mp[term].emplace_back(stoi(docId), stoi(freq));
+    //     }
+    pq.push(Node(tid, fid));
+    // }
+}
+
+void output(int tid, map<int, vector<pair<int, int>>>& mp, VByteWriter& output_file) {
+    output_file.writeList(tid, mp[tid]);
 }
 
 // n way merge 
-void nway_merge(ifstream input_file[], int n, ofstream& output_file) {
+void nway_merge(VByteReader input_file[], int n, VByteWriter& output_file) {
     priority_queue<Node> pq;
-    map<string, vector<pair<int, int>>> mp;
+    map<int, vector<pair<int, int>>> mp; // term_id [(doc_id, freq) ..]
+    vector<int> start(n, 0);
+    vector<int> end(n);
     for (int i = 0; i < n; i++) {
-        addToQue(i, pq, mp, input_file[i]);
+        end[i] = input_file[i].getFileSize();
+    }
+    for (int i = 0; i < n; i++) {
+        addToQue(i, pq, mp, input_file[i], start[i], end[i]);
     }
     while (pq.size()) {
         auto cur = pq.top();
-        string term = cur.term;
+        // string term = cur.term;
+        int tid = cur.tid;
 
         // output merged list for term 
-        output(term, mp, output_file);
+        output(tid, mp, output_file);
 
-        while (pq.size() && term == pq.top().term) {
-            int id = pq.top().id;
+        while (pq.size() && tid == pq.top().tid) {
+            int fid = pq.top().fid;
             pq.pop();
-            addToQue(id, pq, mp, input_file[id]);
+            addToQue(fid, pq, mp, input_file[fid]);
         }
 
-        mp.erase(term);
+        mp.erase(tid);
     }
 }
 
@@ -93,16 +85,20 @@ string getNum(int x) {
 // merge files in [start, start + number) to a target file
 void merge_(int step, int start, int number, int target) {
     cout << "merge step: " << step << " from " << start << " to " << start + number - 1 << endl;
-    ifstream input_file[number];
-    ofstream output_file;
+    // ifstream input_file[number];
+    // ofstream output_file;
+    VByteReader input_file[number];
     for (int j = 0; j < number; j++) {
         if (step == 1) {
-            input_file[j].open("../intermediate-output-2/" + getNum(start + j) + ".txt");
+            input_file[j].open("../intermediate-output-2/" + getNum(start + j) + ".bin");
+            // input_file[j].open("../intermediate-output-2/" + getNum(start + j) + ".bin");
         } else {
-            input_file[j].open("../intermediate-output-3/" + getNum(start + j) + ".merge" + to_string(step - 1) + ".txt");
+            input_file[j] = VByteReader("../intermediate-output-3/" + getNum(start + j) + ".merge" + to_string(step - 1) + ".bin");
+            // input_file[j].open("../intermediate-output-3/" + getNum(start + j) + ".merge" + to_string(step - 1) + ".bin");
         }
     }
-    output_file.open("../intermediate-output-3/" + getNum(target) + ".merge" + to_string(step) + ".txt");
+    // output_file.open("../intermediate-output-3/" + getNum(target) + ".merge" + to_string(step) + ".txt");
+    VByteWriter output_file("../intermediate-output-3/" + getNum(target) + ".merge" + to_string(step) + ".bin");
 
     nway_merge(input_file, number, output_file);
 

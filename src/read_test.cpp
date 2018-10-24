@@ -14,12 +14,50 @@ using namespace std;
 
 int main() {
     // this is a test : decode info from binarry file and check value
-    VByteReader reader("../output/intermediate-output-2/index-00000.bin");
-    int start = 49018155, end = 49018167;
-    int num = 2;
-    int id = 1102785;
-    auto list = reader.read(start, end);
-    cout << list[0] << endl;
-    cout << list.back() << endl;
+    Reader index_reader("../output/intermediate-output-2/index-01001.bin");
+    Reader term_index_reader("../output/intermediate-output-2/index-01001.txt");
+    Reader term_reader("../output/term_table.txt");
+    Reader url_reader("../output/url_table.txt");
+    auto terms = term_reader.termread();
+    auto urls = url_reader.urlread();
+    auto term_index = term_index_reader.indexread();
+
+    for (auto url : urls) {
+        cout << url.uid << " " << url.url << " " << url.length << endl;
+    }
+    for (auto term : terms) {
+        cout << term.tid << " " << term.term << endl;
+    }
+
+    for (auto index: term_index) {
+        int tid = index.tid, start = index.start, end = index.end, number = index.number;
+        auto docs = index_reader.vreadList(tid, start, end, number);
+        for (auto doc : docs) {
+            int uid = doc.uid, freq = doc.freq;
+            cout << terms[tid].term << " " << urls[uid].url << " " << freq << endl;
+        }
+    }
+    // for (auto p : term_index.read()) {
+    //     int id = p.first;
+    //     int start = stoi(p.second[0]);
+    //     int end = stoi(p.second[1]);
+    //     int number = stoi(p.second[2]);
+    //     string term = terms[id][0];
+    //     cout << term << endl;
+    //     cout << start << " " << end << " " << number << endl;
+    //     auto res = index.read(id, start, end, number);
+    //     for (auto doc : res) {
+    //         int did = doc.first, freq = doc.second;
+    //         cout << did << endl;
+    //         string url = urls[did][0];
+    //         cout << "term: " << term << " in doc: " << url << " occur: " << freq << endl;
+    //     }
+    // }
+    // int start = 49018155, end = 49018167;
+    // int num = 2;
+    // int id = 1102785;
+    // auto list = reader.read(start, end);
+    // cout << list[0] << endl;
+    // cout << list.back() << endl;
     return 0;
 }
