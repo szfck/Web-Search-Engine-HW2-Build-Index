@@ -25,9 +25,7 @@ string str(int x) {
 }
 // add term to priority queue
 void addToQue(int fid, priority_queue<Node>& pq, map<int, vector<Doc>>& mp, Reader& indexes, const  vector<Index>& term_index_vec, int& counter) {
-    cout << (int) term_index_vec.size() << endl;
     if (counter >= (int) term_index_vec.size()) return;
-    cout << "nway merge ........... " << endl;
     int idx = counter++;
     auto index = term_index_vec[idx];
     int tid = index.tid, start = index.start, end = index.end, number = index.number;
@@ -55,19 +53,16 @@ void nway_merge(Reader indexes[], Reader term_indexes[], int n, Writer& merged_i
     map<int, vector<Doc>> mp; // term_id [(doc_id, freq) ..]
     vector<Index> term_indexes_vec[n];
     vector<int> counter(n, 0);
-    cout << "nway merge " << n << endl;
     for (int i = 0; i < n; i++) {
         term_indexes_vec[i] = term_indexes[i].indexread();
     }
     for (int i = 0; i < n; i++) {
-    cout << "nway merge " << n << endl;
         addToQue(i, pq, mp, indexes[i], term_indexes_vec[i], counter[i]);
     }
     while (pq.size()) {
         auto cur = pq.top();
         // string term = cur.term;
         int tid = cur.tid;
-        cout << cur.tid << " " << cur.fid << endl;
 
         // output merged list for term 
         output(tid, mp, merged_index, merged_term_index);
@@ -104,25 +99,25 @@ void merge_(int step, int start, int number, int target) {
             index_path = "../output/intermediate-output-3/index-" + getNum(start + j) + ".merge" + to_string(step - 1) + ".bin";
             term_index_path = "../output/intermediate-output-3/index-" + getNum(start + j) + ".merge" + to_string(step - 1) + ".txt";
         }
-        cout << index_path << endl;
-        cout << term_index_path << endl;
+        // cout << index_path << endl;
+        // cout << term_index_path << endl;
         indexes[j].open(index_path);
         term_indexes[j].open(term_index_path);
         // term_indexes[j].indexrea
         // Reader tmp(term_index_path);
         // tmp.indexread();
     }
-    cout << "start merging ... " << endl;
+    // cout << "start merging ... " << number << " files" << endl;
     string merge_index_path = "../output/intermediate-output-3/index-" + getNum(target) + ".merge" + to_string(step) + ".bin";
     string merge_term_index_path = "../output/intermediate-output-3/index-" + getNum(target) + ".merge" + to_string(step) + ".txt";
-    cout << merge_index_path << endl;
-    cout << merge_term_index_path << endl;
+    // cout << merge_index_path << endl;
+    // cout << merge_term_index_path << endl;
     Writer merged_index(merge_index_path);
     Writer merged_term_index(merge_term_index_path);
 
     nway_merge(indexes, term_indexes, number, merged_index, merged_term_index);
 
-    cout << "finished .. " << endl;
+    cout << "merge finished .. " << endl;
     for (int j = 0; j < number; j++) {
         indexes[j].close();
         term_indexes[j].close();
@@ -130,8 +125,12 @@ void merge_(int step, int start, int number, int target) {
     merged_index.close();
     merged_term_index.close();
 }
-int main() {
-    merge_(1, 1000, 2, 1002);
+int main(int argc, char** argv) {
+    int step = atoi(argv[1]);
+    int start = atoi(argv[2]);
+    int end = atoi(argv[3]);
+    int target = atoi(argv[4]);
+    merge_(step, start, end - start, target);
     // [0, 300) -> [0, 30)
     // for (int i = 0; i < 300; i += 10) {
     //     merge_(1, i, 10, i / 10);

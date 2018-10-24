@@ -59,7 +59,7 @@ void build(int id) {
 
     string line = "";
     string url = "";
-    map<int, vector<pair<int, int>>> words; 
+    map<int, vector<Doc>> words; 
     while (getline(input_file, line)) {
         if (line == "") continue;
         //get url
