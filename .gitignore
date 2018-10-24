@@ -5,7 +5,7 @@ wet_files
 src/*.o
 src/merge
 src/word_count
-src/read_test
+src/test
 src/build_index
 *.bin
 *.txt
