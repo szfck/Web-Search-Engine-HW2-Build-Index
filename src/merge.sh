@@ -1,0 +1,2 @@
+make merge
+time ./merge

@@ -20,55 +20,62 @@ struct Node {
     }
 };
 
+string str(int x) {
+    return to_string(x);
+}
 // add term to priority queue
-void addToQue(int fid, priority_queue<Node>& pq, map<int, vector<pair<int, int>>>& mp, VByteReader& input_file, int& start, int& end) {
-    int tid = input_file.getNext(start);
-    int number = input_file.getNext(start);
-    auto list = input_file.read(tid, start - 2, start + number, number);
-    // string line = "";
-    // if (getline(input_file, line)) {
-    //     int pos = 0;
-    //     string term = getTerm(line, pos);
-    //     string str = "";
-    //     while ((str = getTerm(line, pos)) != "") {
-    //         str = str.substr(1, (int)str.size() - 2);
-    //         int p = str.find(',');
-    //         string docId = str.substr(0, p);
-    //         string freq = str.substr(p + 1);
-    //         mp[term].emplace_back(stoi(docId), stoi(freq));
-    //     }
+void addToQue(int fid, priority_queue<Node>& pq, map<int, vector<Doc>>& mp, Reader& indexes, const  vector<Index>& term_index_vec, int& counter) {
+    cout << (int) term_index_vec.size() << endl;
+    if (counter >= (int) term_index_vec.size()) return;
+    cout << "nway merge ........... " << endl;
+    int idx = counter++;
+    auto index = term_index_vec[idx];
+    int tid = index.tid, start = index.start, end = index.end, number = index.number;
+    auto docs = indexes.vreadList(tid, start, end, number);
+    for (auto doc : docs) {
+        mp[tid].push_back(doc);
+    }
+    // int tid = indexes.getNext(start);
+    // int number = indexes.getNext(start);
+    // auto list = indexes.read(tid, start - 2, start + number, number);
     pq.push(Node(tid, fid));
-    // }
 }
 
-void output(int tid, map<int, vector<pair<int, int>>>& mp, VByteWriter& output_file) {
-    output_file.writeList(tid, mp[tid]);
+void output(int tid, map<int, vector<Doc>>& mp, Writer& merged_index, Writer& merged_term_index) {
+    // cout << "output : " << tid << endl;
+    int start = merged_index.getOffset();
+    merged_index.vwriteList(tid, mp[tid]);
+    int end = merged_index.getOffset();
+    merged_term_index.swrite(str(tid) + " " + str(start) + " " + str(end) + " " + str(mp[tid].size()) + '\n');
 }
 
 // n way merge 
-void nway_merge(VByteReader input_file[], int n, VByteWriter& output_file) {
+void nway_merge(Reader indexes[], Reader term_indexes[], int n, Writer& merged_index, Writer& merged_term_index) {
     priority_queue<Node> pq;
-    map<int, vector<pair<int, int>>> mp; // term_id [(doc_id, freq) ..]
-    vector<int> start(n, 0);
-    vector<int> end(n);
+    map<int, vector<Doc>> mp; // term_id [(doc_id, freq) ..]
+    vector<Index> term_indexes_vec[n];
+    vector<int> counter(n, 0);
+    cout << "nway merge " << n << endl;
     for (int i = 0; i < n; i++) {
-        end[i] = input_file[i].getFileSize();
+        term_indexes_vec[i] = term_indexes[i].indexread();
     }
     for (int i = 0; i < n; i++) {
-        addToQue(i, pq, mp, input_file[i], start[i], end[i]);
+    cout << "nway merge " << n << endl;
+        addToQue(i, pq, mp, indexes[i], term_indexes_vec[i], counter[i]);
     }
     while (pq.size()) {
         auto cur = pq.top();
         // string term = cur.term;
         int tid = cur.tid;
+        cout << cur.tid << " " << cur.fid << endl;
 
         // output merged list for term 
-        output(tid, mp, output_file);
+        output(tid, mp, merged_index, merged_term_index);
 
         while (pq.size() && tid == pq.top().tid) {
             int fid = pq.top().fid;
             pq.pop();
-            addToQue(fid, pq, mp, input_file[fid]);
+            addToQue(fid, pq, mp, indexes[fid], term_indexes_vec[fid], counter[fid]);
         }
 
         mp.erase(tid);
@@ -85,42 +92,59 @@ string getNum(int x) {
 // merge files in [start, start + number) to a target file
 void merge_(int step, int start, int number, int target) {
     cout << "merge step: " << step << " from " << start << " to " << start + number - 1 << endl;
-    // ifstream input_file[number];
-    // ofstream output_file;
-    VByteReader input_file[number];
+    Reader indexes[number];
+    Reader term_indexes[number];
     for (int j = 0; j < number; j++) {
+        string index_path = "";
+        string term_index_path = "";
         if (step == 1) {
-            input_file[j].open("../intermediate-output-2/" + getNum(start + j) + ".bin");
-            // input_file[j].open("../intermediate-output-2/" + getNum(start + j) + ".bin");
+            index_path = "../output/intermediate-output-2/index-" + getNum(start + j) + ".bin";
+            term_index_path = "../output/intermediate-output-2/index-" + getNum(start + j) + ".txt";
         } else {
-            input_file[j] = VByteReader("../intermediate-output-3/" + getNum(start + j) + ".merge" + to_string(step - 1) + ".bin");
-            // input_file[j].open("../intermediate-output-3/" + getNum(start + j) + ".merge" + to_string(step - 1) + ".bin");
+            index_path = "../output/intermediate-output-3/index-" + getNum(start + j) + ".merge" + to_string(step - 1) + ".bin";
+            term_index_path = "../output/intermediate-output-3/index-" + getNum(start + j) + ".merge" + to_string(step - 1) + ".txt";
         }
+        cout << index_path << endl;
+        cout << term_index_path << endl;
+        indexes[j].open(index_path);
+        term_indexes[j].open(term_index_path);
+        // term_indexes[j].indexrea
+        // Reader tmp(term_index_path);
+        // tmp.indexread();
     }
-    // output_file.open("../intermediate-output-3/" + getNum(target) + ".merge" + to_string(step) + ".txt");
-    VByteWriter output_file("../intermediate-output-3/" + getNum(target) + ".merge" + to_string(step) + ".bin");
+    cout << "start merging ... " << endl;
+    string merge_index_path = "../output/intermediate-output-3/index-" + getNum(target) + ".merge" + to_string(step) + ".bin";
+    string merge_term_index_path = "../output/intermediate-output-3/index-" + getNum(target) + ".merge" + to_string(step) + ".txt";
+    cout << merge_index_path << endl;
+    cout << merge_term_index_path << endl;
+    Writer merged_index(merge_index_path);
+    Writer merged_term_index(merge_term_index_path);
 
-    nway_merge(input_file, number, output_file);
+    nway_merge(indexes, term_indexes, number, merged_index, merged_term_index);
 
+    cout << "finished .. " << endl;
     for (int j = 0; j < number; j++) {
-        input_file[j].close();
+        indexes[j].close();
+        term_indexes[j].close();
     }
-    output_file.close();
+    merged_index.close();
+    merged_term_index.close();
 }
 int main() {
+    merge_(1, 1000, 2, 1002);
     // [0, 300) -> [0, 30)
-    for (int i = 0; i < 300; i += 10) {
-        merge_(1, i, 10, i / 10);
-    }
-    // [0, 30) -> [0, 6)
-    for (int i = 0; i < 30; i += 5) {
-        merge_(2, i, 5, i / 5);
-    }
-    // [0, 6) -> [0, 2)
-    for (int i = 0; i < 6; i += 3) {
-        merge_(3, i, 3, i / 3);
-    }
-    // [0, 2) -> [0, 1)
-    merge_(4, 0, 2, 0);
+    // for (int i = 0; i < 300; i += 10) {
+    //     merge_(1, i, 10, i / 10);
+    // }
+    // // [0, 30) -> [0, 6)
+    // for (int i = 0; i < 30; i += 5) {
+    //     merge_(2, i, 5, i / 5);
+    // }
+    // // [0, 6) -> [0, 2)
+    // for (int i = 0; i < 6; i += 3) {
+    //     merge_(3, i, 3, i / 3);
+    // }
+    // // [0, 2) -> [0, 1)
+    // merge_(4, 0, 2, 0);
     return 0;
 }

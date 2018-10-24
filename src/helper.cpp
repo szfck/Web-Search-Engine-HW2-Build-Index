@@ -48,16 +48,16 @@ void Writer::swrite(string s) {
     out << s;
 }
 
-void Writer::vwriteList(int tid, const vector<pair<int, int>>& list) {
+void Writer::vwriteList(int tid, const vector<Doc>& list) {
     vwrite(tid);
     int number = (int) list.size();
     vwrite(number);
     for (int i = 0; i < number; i += BLOCK) {
         for (int j = 0; j < BLOCK && i + j < number; j++) {
-            vwrite(list[i + j].first);
+            vwrite(list[i + j].uid);
         }
         for (int j = 0; j < BLOCK && i + j < number; j++) {
-            vwrite(list[i + j].second);
+            vwrite(list[i + j].freq);
         }
     }
 }

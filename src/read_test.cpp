@@ -12,10 +12,16 @@
 
 using namespace std;
 
-int main() {
+int main(int argc, char** argv) {
     // this is a test : decode info from binarry file and check value
-    Reader index_reader("../output/intermediate-output-2/index-01001.bin");
-    Reader term_index_reader("../output/intermediate-output-2/index-01001.txt");
+    // Reader index_reader("../output/intermediate-output-2/index-01001.bin");
+    // Reader index_reader("../output/intermediate-output-2/index-01001.bin");
+    string index_path(argv[1]);
+    string term_index_path(argv[2]);
+    cout << index_path << endl;
+    cout << term_index_path << endl;
+    Reader index_reader(index_path);
+    Reader term_index_reader(term_index_path);
     Reader term_reader("../output/term_table.txt");
     Reader url_reader("../output/url_table.txt");
     auto terms = term_reader.termread();

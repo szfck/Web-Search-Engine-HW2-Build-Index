@@ -12,11 +12,11 @@ RM = rm -f  # rm command
 clean:
 	$(RM) *.o
 
-word_count: word_count.cpp
-	$(CC) $(CFLAGS) $^ -o $@ && time ./word_count
+# word_count: word_count.cpp
+# 	$(CC) $(CFLAGS) $^ -o $@ && time ./word_count
 
-merge: merge.cpp
-	$(CC) $(CFLAGS) $^ -o $@ && time ./merge
+merge: merge.cpp helper.o
+	$(CC) $(CFLAGS) $^ -o $@
 
 build_index: build_index.cpp helper.o
 	$(CC) $(CFLAGS) $^ -o $@

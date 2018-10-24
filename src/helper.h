@@ -5,20 +5,6 @@
 using namespace std;
 
 const int BLOCK = 128;
-class Writer {
-    protected:
-        int offset;
-        ofstream out;
-    public:
-        Writer();
-        Writer(string file_name);
-        void open(string file_name);
-        void close();
-        int getOffset();
-        void vwrite(int x);
-        void swrite(string s);
-        void vwriteList(int tid, const vector<pair<int, int>>& list);
-};
 
 struct Url {
     string url;
@@ -46,6 +32,21 @@ struct Doc {
     int uid, freq;
     Doc() {}
     Doc(int uid, int freq) : uid(uid), freq(freq) {}
+};
+
+class Writer {
+    protected:
+        int offset;
+        ofstream out;
+    public:
+        Writer();
+        Writer(string file_name);
+        void open(string file_name);
+        void close();
+        int getOffset();
+        void vwrite(int x);
+        void swrite(string s);
+        void vwriteList(int tid, const vector<Doc>& list);
 };
 
 class Reader {
